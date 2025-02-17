@@ -1,18 +1,28 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from './user.schema'; 
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import * as dotenv from 'dotenv';
 
-@Injectable()
-export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+dotenv.config(); 
 
-  async createUser(email: string, password: string): Promise<User> {
-    const newUser = new this.userModel({ email, password });
-    return newUser.save();
-  }
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
 
-  async findOne(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email }).exec();
-  }
+  
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+  app.enableCors();
+
+  
+  app.use((req, res, next) => {
+    if (req.url === '/favicon.ico') {
+      res.status(204).end();  
+    } else {
+      next();
+    }
+  });
+
+  await app.listen(process.env.PORT || 3000);
+  console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 }
+
+bootstrap();
