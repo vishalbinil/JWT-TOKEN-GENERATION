@@ -1,21 +1,25 @@
 import { Module } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport'; 
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '../users/user.schema';
-import { JwtModule } from '@nestjs/jwt';  // ✅ Import JwtModule
-import { JwtService } from '@nestjs/jwt'; // ✅ Import JwtService
+import { JwtModule } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
+import { JwtStrategy } from './jwt.strategy'; 
+import { AuthController } from './auth.controller'; // ✅ Add this
 
 @Module({
   imports: [
     UsersModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-    JwtModule.register({    // ✅ Register JWT Module
-      secret: 'your-secret-key',  // ⚠️ Use env variables in production!
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'your-secret-key',  
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  providers: [AuthService, JwtService], // ✅ Provide JwtService
-  exports: [AuthService, JwtService],   // ✅ Export if needed elsewhere
+  controllers: [AuthController],
+  providers: [AuthService, JwtService, JwtStrategy], 
+  exports: [AuthService, JwtService],
 })
 export class AuthModule {}
